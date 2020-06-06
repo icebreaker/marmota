@@ -11,14 +11,14 @@ There are no precompiled binaries, therefore you'll have to compile marmota your
 This isn't terribly difficult, since there are only a handful of dependencies,
 namely: [GTK+ 3.0+][2] and [VTE 0.91+][1].
 
-Once you installed the _development_ versions (with headers) of these the dependencies,
-it becomes possible to compile marmota by typing typing `make` in a terminal.
+Once you installed the _development_ versions (with headers) of these dependencies,
+it becomes possible to compile marmota by typing `make` in a terminal.
 
 ```bash
 $ make
 ```
 
-This will result in a `build/config.h` header file a and `build/marmota` executable.
+This will result in a `build/config.h` header file and a `build/marmota` executable.
 
 The `build/config.h` header file contains the default compile time configuration.
 
