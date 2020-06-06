@@ -43,9 +43,9 @@
 //
 .allow_fullscreen_toggle_shortcut = TRUE,
 //
-// Whether or not to allow copy/paste via Ctrl+C and V.
+// Whether or not to allow copy/paste via Ctrl+Shift+C and V.
 //
-.allow_copy_paste_shortcut = TRUE,
+.allow_copy_paste_shortcut = FALSE,
 //
 // Whether or not to allow exit via Escape after the "child process"
 // has exited, when launched in hold mode.
