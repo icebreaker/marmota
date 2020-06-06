@@ -1,0 +1,15 @@
+build:
+	$(MAKE)
+
+execute:
+	build/marmota
+
+generate:
+	@echo "Nothing to generate."
+
+clean:
+	$(MAKE) cleanall
+
+.PHONY: build execute generate clean
+.IGNORE:
+.SILENT:
