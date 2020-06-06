@@ -18,7 +18,7 @@ it becomes possible to compile marmota by typing `make` in a terminal.
 $ make
 ```
 
-This will result in a `build/config.h` header file and a `build/marmota` executable.
+This will result in a `build/config.h` configuration header file and a `build/marmota` executable.
 
 The `build/config.h` header file contains the default compile time configuration.
 
@@ -108,7 +108,7 @@ License
 **marmota** is provided **as-is** under the **MIT** license.
 For more information see LICENSE.
 
-[Marmota monax (Linnaeus, 1758)][3] by T. Michael Keesey is licensed under CC0 1.0.
+[Marmota monax (Linnaeus, 1758)][3] logo by T. Michael Keesey is licensed under CC0 1.0.
 
 [1]: https://gitlab.gnome.org/GNOME/vte
 [2]: https://www.gtk.org/
