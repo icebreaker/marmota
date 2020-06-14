@@ -202,11 +202,12 @@
 // If NULL, the default color is used.
 //
 .cursor_foreground_color = "#000000",
+//
 // Sets foreground color.
 //
 // If NULL, the color at index 7 from colors is used.
 //
-.foreground_color = "#C6C6C6",
+.foreground_color = "#A6A6A6",
 //
 // Sets background color.
 //
