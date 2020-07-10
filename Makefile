@@ -35,7 +35,7 @@ install: $(BUILD_TARGET)
 clean:
 	rm -f $(BUILD_TARGET)
 
-cleanall: clean
+distclean: clean
 	rm -f $(BUILD_CONFIG)
 
-.PHONY: all config install installdirs clean cleanall
+.PHONY: all config install installdirs clean distclean
