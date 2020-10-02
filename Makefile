@@ -1,4 +1,4 @@
-CFLAGS += -ansi -pedantic -std=c99 -Wall -Wextra -Werror -O3 -Isrc -Ibuild
+CFLAGS += -std=c99 -Wall -Wextra -Werror -O3 -Isrc -Ibuild
 
 ifdef MAX_COLORS
 CFLAGS += -DMRT_MAX_COLORS=$(MAX_COLORS)
