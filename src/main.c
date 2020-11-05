@@ -87,6 +87,10 @@ static bool parse_args(mrt_context_t *ctx, const int argc, const char *argv[])
 			ctx->spawn_argv = &argv[++i];
 			break;
 		}
+		else if((!strcmp(arg, "-f") || !strcmp(arg, "--font")) && i < argc - 1)
+		{
+			ctx->font = (const char *) argv[++i];
+		}
 		else
 		{
 			ctx->exit_code = -1;
@@ -122,6 +126,7 @@ static void show_help(const char *name, const char *arg)
 		"arguments:\n"
 		"\t-e [arguments]\t- command to execute\n"
 		"\t-hold\t\t- hold window after exit\n"
+		"\t-f, --font\t- set font (i.e: 'IBM Plex Mono weight=650 19')\n"
 		"\t-h, --help\t- show this help\n"
 		"\t-v, --version\t- display version\n",
 		name,
