@@ -33,7 +33,7 @@
 #include <pcre2.h>
 
 #ifndef MRT_VERSION
-	#define MRT_VERSION "1.0.0"
+	#define MRT_VERSION "1.0.1"
 #endif
 
 #ifndef MRT_MAX_COLORS
