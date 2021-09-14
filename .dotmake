@@ -1,0 +1,21 @@
+function build()
+{
+	make
+}
+
+function execute()
+{
+	build && build/marmota
+}
+
+function generate()
+{
+	echo 'Nothing to generate.'
+}
+
+function clean()
+{
+	make distclean
+}
+
+# vim: set ft=bash:
