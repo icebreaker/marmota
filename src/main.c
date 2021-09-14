@@ -95,6 +95,18 @@ static bool parse_args(mrt_context_t *ctx, const int argc, const char *argv[])
 		{
 			ctx->icon_name = (const char *) argv[++i];
 		}
+		else if(!strcmp(arg, "-maximized"))
+		{
+			ctx->maximized = TRUE;
+		}
+		else if(!strcmp(arg, "-borderless"))
+		{
+			ctx->borderless = TRUE;
+		}
+		else if(!strcmp(arg, "-fullscreen"))
+		{
+			ctx->fullscreen = TRUE;
+		}
 		else
 		{
 			ctx->exit_code = -1;
@@ -130,6 +142,9 @@ static void show_help(const char *name, const char *arg)
 		"arguments:\n"
 		"\t-e [arguments]\t- command to execute\n"
 		"\t-hold\t\t- hold window after exit\n"
+		"\t-maximized\t- force window to be maximized\n"
+		"\t-borderless\t- force window to be borderless\n"
+		"\t-fullscreen\t- force window to be fullscreen\n"
 		"\t-f, --font\t- set font (i.e: 'IBM Plex Mono weight=650 19')\n"
 		"\t-i, --icon\t- set icon (i.e: 'launchpad')\n"
 		"\t-h, --help\t- show this help\n"
