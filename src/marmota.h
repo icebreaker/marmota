@@ -33,7 +33,7 @@
 #include <pcre2.h>
 
 #ifndef MRT_VERSION
-	#define MRT_VERSION "1.0.3"
+	#define MRT_VERSION "1.0.4"
 #endif
 
 #ifndef MRT_MAX_COLORS
@@ -89,6 +89,7 @@ typedef struct
 	GtkWidget *term;
 	GtkWidget *win;
 	GtkWidget *context_menu;
+	GtkWidget *fullscreen_menu_item;
 	GtkWidget *scrollbar;
 	gboolean has_exit_code;
 	gint exit_code;

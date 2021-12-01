@@ -144,6 +144,8 @@ gboolean mrt_init(mrt_context_t *ctx)
 			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), ctx->fullscreen);
 			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), menu_item);
 			g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(mrt_context_menu_on_fullscreen), ctx);
+
+			ctx->fullscreen_menu_item = menu_item;
 		}
 
 		if(ctx->allow_context_menu_scrollbar)
@@ -504,8 +506,13 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 		switch(kevent->keyval)
 		{
 			case GDK_KEY_Return:
-				mrt_toggle_fullscreen(ctx);
-				return TRUE;
+			{
+				if(ctx->fullscreen_menu_item != NULL)
+					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(ctx->fullscreen_menu_item), !ctx->fullscreen);
+				else
+					mrt_toggle_fullscreen(ctx);
+			}
+			return TRUE;
 		}
 	}
 
