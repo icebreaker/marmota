@@ -2,7 +2,7 @@ marmota
 =======
 marmota is an _opinionated_ and _minimalist_ terminal emulator based on [VTE][1].
 
-![marmota logo by T. Michael Keesey](marmota.png)
+![marmota logo by T. Michael Keesey](res/marmota_red.png)
 
 Getting Started
 ---------------
