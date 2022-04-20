@@ -33,7 +33,7 @@
 #include <pcre2.h>
 
 #ifndef MRT_VERSION
-	#define MRT_VERSION "1.0.4"
+	#define MRT_VERSION "1.0.5"
 #endif
 
 #ifndef MRT_MAX_COLORS
@@ -64,10 +64,16 @@ typedef struct
 	gboolean allow_fullscreen_toggle_shortcut;
 	gboolean allow_copy_paste_shortcut;
 	gboolean allow_hold_escape_shortcut;
+	gboolean allow_background_image_scale;
+	gboolean allow_background_image_autoscale;
 	gdouble font_scale;
 	guint scrollback_lines;
 	VteCursorBlinkMode cursor_blink_mode;
 	VteCursorShape cursor_shape;
+	GdkRGBA background_image_color;
+	GdkRGBA background_image_overlay_color;
+	GdkPoint background_image_position;
+	GdkPoint background_image_scale;
 	const gchar *shell;
 	const gchar *icon_name;
 	const gchar *word_char_exceptions;
@@ -84,8 +90,10 @@ typedef struct
 	const gchar *foreground_color;
 	const gchar *background_color;
 	const gchar *colors[MRT_MAX_COLORS];
+	const gchar *background_image;
 	const gchar **spawn_argv;
 	gchar *link;
+	cairo_surface_t *background_image_surface;
 	GtkWidget *term;
 	GtkWidget *win;
 	GtkWidget *context_menu;

@@ -95,6 +95,10 @@ static bool parse_args(mrt_context_t *ctx, const int argc, const char *argv[])
 		{
 			ctx->icon_name = (const char *) argv[++i];
 		}
+		else if(!strcmp(arg, "-background") && i < argc - 1)
+		{
+			ctx->background_image = (const char *) argv[++i];
+		}
 		else if(!strcmp(arg, "-maximized"))
 		{
 			ctx->maximized = TRUE;
@@ -145,6 +149,7 @@ static void show_help(const char *name, const char *arg)
 		"\t-maximized\t- force window to be maximized\n"
 		"\t-borderless\t- force window to be borderless\n"
 		"\t-fullscreen\t- force window to be fullscreen\n"
+		"\t-background\t- set background image (i.e: 'terminal.png')\n"
 		"\t-f, --font\t- set font (i.e: 'IBM Plex Mono weight=650 19')\n"
 		"\t-i, --icon\t- set icon (i.e: 'launchpad')\n"
 		"\t-h, --help\t- show this help\n"

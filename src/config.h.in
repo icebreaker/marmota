@@ -52,6 +52,62 @@
 //
 .allow_hold_escape_shortcut = TRUE,
 //
+// Whether or not to allow scaling the background image.
+//
+// If TRUE this will use and apply `background_image_scale`.
+//
+.allow_background_image_scale = FALSE,
+//
+// Whether or not to allow auto scaling the background image.
+//
+// If TRUE this will ignore the `background_image_scale` and calculate
+// the scale based on the aspect ratio of the window and background image.
+//
+.allow_background_image_autoscale = FALSE,
+//
+// Sets the full path to the background image.
+//
+// If NULL, the background image is disabled and none of the other background
+// image related configuration options take any effect whatsoever.
+//
+// i.e: /usr/share/wallpapers/awesome.png
+//
+// If it's not desirable to hard-code the path here for whatever reason, then
+// the `-background` command line argument can be used to specify and override
+// whatever value has been hard-coded here.
+//
+// This can be useful when trying out various background image combinations or
+// if one wants to set something dynamic based on time of the day, day of the
+// year and so forth.
+//
+.background_image = NULL,
+//
+// Sets the background color that is used when a backround image has been
+// been specified.
+//
+// Generally you want this to match the `regular background` color.
+//
+.background_image_color = { 0, 0, 0, 1 },
+//
+// Sets the overlay color of the background image that is applied on top.
+//
+// Generally you want this to be `black` and only play around with the alpha
+// channel in order to control the opacity.
+//
+.background_image_overlay_color = { 0, 0, 0, 0.8 },
+//
+// Sets the background image scale.
+//
+.background_image_scale = { 1, 1 },
+//
+// Sets the background image position relative to the top-left corner of the
+// of the terminal window.
+//
+// Can be useful when used in conjuction with scaling in order to "offset"
+// the background slightly if need be.
+//
+.background_image_position = { 0, 0 },
+//
 // Whether or not to spawn a "login shell".
 //
 // Ignored when the "-e" command line argument is used.

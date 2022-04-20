@@ -65,7 +65,8 @@ static void mrt_on_window_destroy(GtkWidget *widget, gpointer data);
 static void mrt_on_window_title_changed(VteTerminal *term, gpointer data);
 
 static void mrt_on_spawn(VteTerminal *term, GPid pid, GError *err, gpointer data);
-static void mrt_on_child_exited(VteTerminal *term, gint exit_code, gpointer);
+static void mrt_on_child_exited(VteTerminal *term, gint exit_code, gpointer data);
+static gboolean mrt_on_draw(GtkWidget *widget, cairo_t *cr, gpointer data);
 
 static void mrt_on_bell(VteTerminal *term, gpointer data);
 static void mrt_on_hyperlink_changed(VteTerminal *term, gchar *url, GdkRectangle *bbox, gpointer data);
@@ -79,6 +80,8 @@ static void mrt_context_menu_on_close(GtkWidget *widget, gpointer data);
 gboolean mrt_init(mrt_context_t *ctx)
 {
 	int i, tag;
+	cairo_surface_t *surface;
+	cairo_status_t status;
 	GdkRGBA colors[MRT_MAX_COLORS];
 	GdkRGBA color;
 	GtkWidget *menu_item;
@@ -312,6 +315,23 @@ gboolean mrt_init(mrt_context_t *ctx)
 	g_signal_connect(G_OBJECT(ctx->term), "bell", G_CALLBACK(mrt_on_bell), ctx);
 	g_signal_connect(G_OBJECT(ctx->term), "child-exited", G_CALLBACK(mrt_on_child_exited), ctx);
 
+	if(ctx->background_image != NULL)
+	{
+		surface = cairo_image_surface_create_from_png(ctx->background_image);
+		status = cairo_surface_status(surface);
+		if(status == CAIRO_STATUS_SUCCESS)
+		{
+			ctx->background_image_surface = surface;
+
+			vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
+			g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
+		}
+		else
+		{
+			mrt_log("background image error: '%s'", cairo_status_to_string(status));
+		}
+	}
+
 	if(ctx->allow_context_menu || ctx->allow_link)
 		g_signal_connect(G_OBJECT(ctx->term), "button-press-event", G_CALLBACK(mrt_on_button_press), ctx);
 
@@ -332,6 +352,12 @@ void mrt_shutdown(mrt_context_t *ctx)
 {
 	g_free(ctx->link);
 	ctx->link = NULL;
+
+	if(ctx->background_image_surface != NULL)
+	{
+		cairo_surface_destroy(ctx->background_image_surface);
+		ctx->background_image_surface = NULL;
+	}
 }
 
 gboolean mrt_spawn(mrt_context_t *ctx)
@@ -600,6 +626,54 @@ static void mrt_on_spawn(VteTerminal *term, GPid pid, GError *err, gpointer data
 
 	mrt_print_gerror(err, "error on spawn");
 	mrt_quit(ctx);
+}
+
+static gboolean mrt_on_draw(GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+	double w, h, sx, sy;
+	GdkPoint *p;
+	cairo_surface_t *surface;
+	mrt_context_t *ctx;
+
+	ctx = (mrt_context_t *) data;
+
+	surface = ctx->background_image_surface;
+
+	cairo_save(cr);
+
+	gdk_cairo_set_source_rgba(cr, &ctx->background_image_color);
+	cairo_paint(cr);
+
+	if(ctx->allow_background_image_scale)
+	{
+		p = &ctx->background_image_scale;
+		if(p->x != 0 && p->y != 0)
+			cairo_scale(cr, p->x, p->y);
+	}
+	else if(ctx->allow_background_image_autoscale)
+	{
+		w = cairo_image_surface_get_width(surface);
+		h = cairo_image_surface_get_height(surface);
+
+		if(w > 0 && h > 0)
+		{
+			sx = gtk_widget_get_allocated_width(widget) / w;
+			sy = gtk_widget_get_allocated_height(widget) / h;
+
+			if(sx != 0 && sy != 0)
+				cairo_scale(cr, sx, sy);
+		}
+	}
+
+	p = &ctx->background_image_position;
+	cairo_set_source_surface(cr, surface, p->x, p->y);
+	cairo_paint(cr);
+
+	gdk_cairo_set_source_rgba(cr, &ctx->background_image_overlay_color);
+	cairo_paint(cr);
+
+	cairo_restore(cr);
+	return FALSE;
 }
 
 static void mrt_on_child_exited(VteTerminal *term, gint exit_code, gpointer data)
