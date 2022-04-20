@@ -36,6 +36,10 @@
 	#define MRT_VERSION "1.0.5"
 #endif
 
+#ifndef MRT_ENVIRONMENT_VARIABLE_NAME
+	#define MRT_ENVIRONMENT_VARIABLE_NAME "MARMOTA"
+#endif
+
 #ifndef MRT_MAX_COLORS
 	#define MRT_MAX_COLORS 16
 #endif

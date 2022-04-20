@@ -393,6 +393,8 @@ gboolean mrt_spawn(mrt_context_t *ctx)
 		flags = G_SPAWN_SEARCH_PATH | G_SPAWN_FILE_AND_ARGV_ZERO;
 	}
 
+	g_setenv(MRT_ENVIRONMENT_VARIABLE_NAME, ctx->background_image != NULL ? "1" : "0", FALSE);
+
 	vte_terminal_spawn_async(
 		VTE_TERMINAL(ctx->term),
 		VTE_PTY_DEFAULT,
