@@ -4,6 +4,8 @@ marmota is an _opinionated_ and _minimalist_ terminal emulator based on [VTE][1]
 
 ![marmota logo by T. Michael Keesey](res/marmota_red.png)
 
+![demo screenshot](res/demo.png)
+
 Getting Started
 ---------------
 There are no precompiled binaries, therefore you'll have to compile marmota yourself.
