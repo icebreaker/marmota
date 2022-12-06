@@ -39,6 +39,10 @@
 //
 .allow_context_menu_scrollbar = TRUE,
 //
+// Whether or not to display the font scaling related menu items (zoom reset/in/out) in the context menu.
+//
+.allow_context_menu_font_scale = FALSE,
+//
 // Whether or not to allow fullscreen toggling via Alt+Enter.
 //
 .allow_fullscreen_toggle_shortcut = TRUE,
@@ -51,6 +55,10 @@
 // has exited, when launched in hold mode.
 //
 .allow_hold_escape_shortcut = TRUE,
+//
+// Whether or not to allow font scaling via Ctrl+Shift+0, Ctrl+Shift+ + and -.
+//
+.allow_font_scale_shortcut = FALSE,
 //
 // Whether or not to allow scaling the background image.
 //
@@ -208,6 +216,12 @@
 // Sets font scale.
 //
 .font_scale = 1.0,
+//
+// Sets font scale increment.
+//
+// Used when `allow_font_scale_shortcut` and/or `allow_context_menu_font_scale` have been set to TRUE.
+//
+.font_scale_increment = 0.1,
 //
 // Whetver or not to enable link support.
 //

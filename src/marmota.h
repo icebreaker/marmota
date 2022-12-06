@@ -36,12 +36,36 @@
 	#define MRT_VERSION "1.0.5"
 #endif
 
+#ifndef MRT_UNUSED
+	#define MRT_UNUSED(x) (void)(x)
+#endif
+
+#ifndef MRT_CLAMP
+	#define MRT_CLAMP(x, min, max) (((x) < min) ? min : (((x) > max) ? max : (x)))
+#endif
+
 #ifndef MRT_ENVIRONMENT_VARIABLE_NAME
 	#define MRT_ENVIRONMENT_VARIABLE_NAME "MARMOTA"
 #endif
 
 #ifndef MRT_MAX_COLORS
 	#define MRT_MAX_COLORS 16
+#endif
+
+#ifndef MRT_FALLBACK_SHELL
+	#define MRT_FALLBACK_SHELL "/bin/sh"
+#endif
+
+#ifndef MRT_FONT_SCALE_MIN
+	#define MRT_FONT_SCALE_MIN 0.25
+#endif
+
+#ifndef MRT_FONT_SCALE_MAX
+	#define MRT_FONT_SCALE_MAX 4.0
+#endif
+
+#ifndef MRT_CONTROL_SHIFT_MASK
+	#define MRT_CONTROL_SHIFT_MASK (GDK_CONTROL_MASK | GDK_SHIFT_MASK)
 #endif
 
 typedef struct
@@ -65,12 +89,16 @@ typedef struct
 	gboolean allow_context_menu_fullscreen;
 	gboolean allow_context_menu_close;
 	gboolean allow_context_menu_scrollbar;
+	gboolean allow_context_menu_font_scale;
 	gboolean allow_fullscreen_toggle_shortcut;
 	gboolean allow_copy_paste_shortcut;
 	gboolean allow_hold_escape_shortcut;
+	gboolean allow_font_scale_shortcut;
 	gboolean allow_background_image_scale;
 	gboolean allow_background_image_autoscale;
 	gdouble font_scale;
+	gdouble font_scale_increment;
+	gdouble font_scale_current;
 	guint scrollback_lines;
 	VteCursorBlinkMode cursor_blink_mode;
 	VteCursorShape cursor_shape;

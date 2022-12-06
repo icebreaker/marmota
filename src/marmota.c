@@ -24,14 +24,6 @@
 #include <stdio.h>
 #include <marmota.h>
 
-#ifndef MRT_FALLBACK_SHELL
-	#define MRT_FALLBACK_SHELL "/bin/sh"
-#endif
-
-#ifndef MRT_UNUSED
-	#define MRT_UNUSED(x) (void)(x)
-#endif
-
 #define MRT_ISSET(x) \
 	((x) != NULL && *(x) != '\0')
 
@@ -76,6 +68,9 @@ static void mrt_context_menu_on_paste(GtkWidget *widget, gpointer data);
 static void mrt_context_menu_on_fullscreen(GtkWidget *widget, gpointer data);
 static void mrt_context_menu_on_scrollbar(GtkWidget *widget, gpointer data);
 static void mrt_context_menu_on_close(GtkWidget *widget, gpointer data);
+static void mrt_context_menu_on_zoom_in(GtkWidget *widget, gpointer data);
+static void mrt_context_menu_on_zoom_out(GtkWidget *widget, gpointer data);
+static void mrt_context_menu_on_zoom_reset(GtkWidget *widget, gpointer data);
 
 gboolean mrt_init(mrt_context_t *ctx)
 {
@@ -87,7 +82,21 @@ gboolean mrt_init(mrt_context_t *ctx)
 	GtkWidget *menu_item;
 	GtkWidget *context_menu;
 	VteRegex *url_regex;
+	gboolean allow_shortcut = FALSE;
 	GError *err = NULL;
+
+	if(ctx->font_scale <= 0.0 || ctx->font_scale_increment <= 0.0)
+	{
+		ctx->font_scale = 0.0;
+		ctx->font_scale_current = 0.0;
+		ctx->font_scale_increment = 0.0;
+		ctx->allow_font_scale_shortcut = FALSE;
+		ctx->allow_context_menu_font_scale = FALSE;
+	}
+	else
+	{
+		ctx->font_scale_current = ctx->font_scale;
+	}
 
 	ctx->link = NULL;
 	if(ctx->allow_link)
@@ -159,6 +168,25 @@ gboolean mrt_init(mrt_context_t *ctx)
 			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), ctx->show_scrollbar);
 			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), menu_item);
 			g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(mrt_context_menu_on_scrollbar), ctx);
+		}
+
+		if(ctx->allow_context_menu_font_scale)
+		{
+			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), gtk_separator_menu_item_new());
+
+			menu_item = gtk_menu_item_new_with_label("Zoom In");
+			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), menu_item);
+			g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(mrt_context_menu_on_zoom_in), ctx);
+
+			menu_item = gtk_menu_item_new_with_label("Zoom Out");
+			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), menu_item);
+			g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(mrt_context_menu_on_zoom_out), ctx);
+
+			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), gtk_separator_menu_item_new());
+
+			menu_item = gtk_menu_item_new_with_label("Zoom Reset");
+			gtk_menu_shell_append(GTK_MENU_SHELL(context_menu), menu_item);
+			g_signal_connect(G_OBJECT(menu_item), "activate", G_CALLBACK(mrt_context_menu_on_zoom_reset), ctx);
 		}
 
 		if(ctx->allow_context_menu_close)
@@ -335,7 +363,12 @@ gboolean mrt_init(mrt_context_t *ctx)
 	if(ctx->allow_context_menu || ctx->allow_link)
 		g_signal_connect(G_OBJECT(ctx->term), "button-press-event", G_CALLBACK(mrt_on_button_press), ctx);
 
-	if(ctx->allow_fullscreen_toggle_shortcut || ctx->allow_copy_paste_shortcut || ctx->allow_hold_escape_shortcut)
+	allow_shortcut = ctx->allow_fullscreen_toggle_shortcut ||
+		ctx->allow_copy_paste_shortcut ||
+		ctx->allow_hold_escape_shortcut ||
+		ctx->allow_font_scale_shortcut;
+
+	if(allow_shortcut)
 		g_signal_connect(G_OBJECT(ctx->term), "key-press-event", G_CALLBACK(mrt_on_key_press), ctx);
 
 	if(ctx->allow_link && ctx->allow_hyperlink)
@@ -429,8 +462,8 @@ static void mrt_init_font(const mrt_context_t *ctx)
 
 	vte_terminal_set_font(VTE_TERMINAL(ctx->term), font_desc);
 
-	if(ctx->font_scale > 0.0)
-		vte_terminal_set_font_scale(VTE_TERMINAL(ctx->term), ctx->font_scale);
+	if(ctx->font_scale_current > 0.0)
+		vte_terminal_set_font_scale(VTE_TERMINAL(ctx->term), ctx->font_scale_current);
 
 	pango_font_description_free(font_desc);
 }
@@ -517,8 +550,6 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 	GdkEventKey *kevent = (GdkEventKey *) event;
 	mrt_context_t *ctx = (mrt_context_t *) data;
 
-	MRT_UNUSED(widget);
-
 	if(ctx->allow_hold_escape_shortcut && ctx->hold && ctx->has_exit_code)
 	{
 		switch(kevent->keyval)
@@ -554,6 +585,24 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 
 			case GDK_KEY_V:
 				vte_terminal_paste_clipboard(VTE_TERMINAL(ctx->term));
+				return TRUE;
+		}
+	}
+
+	if(ctx->allow_font_scale_shortcut && ((kevent->state & MRT_CONTROL_SHIFT_MASK) == MRT_CONTROL_SHIFT_MASK))
+	{
+		switch(kevent->keyval)
+		{
+			case GDK_KEY_plus:
+				mrt_context_menu_on_zoom_in(widget, data);
+				return TRUE;
+
+			case GDK_KEY_underscore:
+				mrt_context_menu_on_zoom_out(widget, data);
+				return TRUE;
+
+			case GDK_KEY_parenright:
+				mrt_context_menu_on_zoom_reset(widget, data);
 				return TRUE;
 		}
 	}
@@ -753,4 +802,45 @@ static void mrt_context_menu_on_close(GtkWidget *widget, gpointer data)
 	MRT_UNUSED(widget);
 
 	mrt_quit((mrt_context_t *) data);
+}
+
+static void mrt_context_menu_on_zoom_in(GtkWidget *widget, gpointer data)
+{
+	mrt_context_t *ctx = (mrt_context_t *) data;
+
+	MRT_UNUSED(widget);
+
+	ctx->font_scale_current = MRT_CLAMP(
+		ctx->font_scale_current + ctx->font_scale_increment,
+		MRT_FONT_SCALE_MIN,
+		MRT_FONT_SCALE_MAX
+	);
+	vte_terminal_set_font_scale(VTE_TERMINAL(ctx->term), ctx->font_scale_current);
+}
+
+static void mrt_context_menu_on_zoom_out(GtkWidget *widget, gpointer data)
+{
+	mrt_context_t *ctx = (mrt_context_t *) data;
+
+	MRT_UNUSED(widget);
+
+	ctx->font_scale_current = MRT_CLAMP(
+		ctx->font_scale_current - ctx->font_scale_increment,
+		MRT_FONT_SCALE_MIN,
+		MRT_FONT_SCALE_MAX
+	);
+	vte_terminal_set_font_scale(VTE_TERMINAL(ctx->term), ctx->font_scale_current);
+}
+
+static void mrt_context_menu_on_zoom_reset(GtkWidget *widget, gpointer data)
+{
+	mrt_context_t *ctx = (mrt_context_t *) data;
+
+	MRT_UNUSED(widget);
+
+	if(ctx->font_scale_current != ctx->font_scale)
+	{
+		ctx->font_scale_current = ctx->font_scale;
+		vte_terminal_set_font_scale(VTE_TERMINAL(ctx->term), ctx->font_scale_current);
+	}
 }
