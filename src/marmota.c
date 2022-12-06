@@ -575,7 +575,7 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 		}
 	}
 
-	if(ctx->allow_copy_paste_shortcut && (kevent->state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)))
+	if(ctx->allow_copy_paste_shortcut && ((kevent->state & MRT_CONTROL_SHIFT_MASK) == MRT_CONTROL_SHIFT_MASK))
 	{
 		switch(kevent->keyval)
 		{
