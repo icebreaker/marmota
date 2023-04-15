@@ -33,7 +33,7 @@
 #include <pcre2.h>
 
 #ifndef MRT_VERSION
-	#define MRT_VERSION "1.0.5"
+	#define MRT_VERSION "1.0.6"
 #endif
 
 #ifndef MRT_UNUSED
