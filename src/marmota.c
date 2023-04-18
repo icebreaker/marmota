@@ -46,6 +46,8 @@ static void mrt_init_font(const mrt_context_t *ctx);
 static void mrt_toggle_fullscreen(mrt_context_t *ctx);
 static void mrt_toggle_scrollbar(mrt_context_t *ctx);
 
+static void mrt_load_background_image(mrt_context_t *ctx);
+
 static gchar *mrt_find_shell(const mrt_context_t *ctx);
 static gchar *mrt_find_link(const mrt_context_t *ctx, GdkEvent *event);
 static gboolean mrt_open_link(const mrt_context_t *ctx, const gchar *link);
@@ -75,8 +77,6 @@ static void mrt_context_menu_on_zoom_reset(GtkWidget *widget, gpointer data);
 gboolean mrt_init(mrt_context_t *ctx)
 {
 	int i, tag;
-	cairo_surface_t *surface;
-	cairo_status_t status;
 	GdkRGBA colors[MRT_MAX_COLORS];
 	GdkRGBA color;
 	GtkWidget *menu_item;
@@ -340,25 +340,10 @@ gboolean mrt_init(mrt_context_t *ctx)
 		}
 	}
 
+	mrt_load_background_image(ctx);
+
 	g_signal_connect(G_OBJECT(ctx->term), "bell", G_CALLBACK(mrt_on_bell), ctx);
 	g_signal_connect(G_OBJECT(ctx->term), "child-exited", G_CALLBACK(mrt_on_child_exited), ctx);
-
-	if(ctx->background_image != NULL)
-	{
-		surface = cairo_image_surface_create_from_png(ctx->background_image);
-		status = cairo_surface_status(surface);
-		if(status == CAIRO_STATUS_SUCCESS)
-		{
-			ctx->background_image_surface = surface;
-
-			vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
-			g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
-		}
-		else
-		{
-			mrt_log("background image error: '%s'", cairo_status_to_string(status));
-		}
-	}
 
 	if(ctx->allow_context_menu || ctx->allow_link)
 		g_signal_connect(G_OBJECT(ctx->term), "button-press-event", G_CALLBACK(mrt_on_button_press), ctx);
@@ -486,6 +471,29 @@ static void mrt_toggle_scrollbar(mrt_context_t *ctx)
 		gtk_widget_show(ctx->scrollbar);
 	else
 		gtk_widget_hide(ctx->scrollbar);
+}
+
+static void mrt_load_background_image(mrt_context_t *ctx)
+{
+	cairo_surface_t *surface;
+	cairo_status_t status;
+
+	if(ctx->background_image == NULL)
+		return;
+
+	surface = cairo_image_surface_create_from_png(ctx->background_image);
+	status = cairo_surface_status(surface);
+	if(status == CAIRO_STATUS_SUCCESS)
+	{
+		ctx->background_image_surface = surface;
+
+		vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
+		g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
+	}
+	else
+	{
+		mrt_log("background image error: '%s'", cairo_status_to_string(status));
+	}
 }
 
 static gchar *mrt_find_shell(const mrt_context_t *ctx)
