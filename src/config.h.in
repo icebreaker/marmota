@@ -88,6 +88,20 @@
 // if one wants to set something dynamic based on time of the day, day of the
 // year and so forth.
 //
+// The background image can also point to an MPEG video.
+//
+// i.e /usr/share/videos/dune_sands_of_arrakis.mpg
+//
+// For the best experience the video should contain a looped sequeuence without
+// any sound, as it is loaded into memory on startup.
+//
+// It is also worth noting that this is an experimental feature, therefore your
+// mileage may very much very when it comes to performance and/or usability.
+//
+// Sample `ffmpeg` command to produce a suitable MPEG file from an MP4 given as input:
+//
+// ffmpeg -i input.mp4 -c:v mpeg1video -q:v 0 -na -format mpeg output.mpg
+//
 .background_image = NULL,
 //
 // Sets the background color that is used when a backround image has been
@@ -101,6 +115,13 @@
 //
 // Generally you want this to be `black` and only play around with the alpha
 // channel in order to control the opacity.
+//
+// The alpha channel can also be overriden from the command line by specifying
+// `-background-opacity 0.75` command line argument with the desired floating
+// point alpha value.
+//
+// 0.0 = fully transparent
+// 1.0 = fully opaque
 //
 .background_image_overlay_color = { 0, 0, 0, 0.8 },
 //

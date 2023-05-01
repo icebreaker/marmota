@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <marmota.h>
 
+#define PL_MPEG_IMPLEMENTATION
+#include "pl_mpeg.h"
+
 #define MRT_ISSET(x) \
 	((x) != NULL && *(x) != '\0')
 
@@ -46,7 +49,16 @@ static void mrt_init_font(const mrt_context_t *ctx);
 static void mrt_toggle_fullscreen(mrt_context_t *ctx);
 static void mrt_toggle_scrollbar(mrt_context_t *ctx);
 
-static void mrt_load_background_image(mrt_context_t *ctx);
+static void mrt_background_video_on_decode(plm_t *plm, plm_frame_t *frame, void *data);
+static gboolean mrt_background_video_decode_timer_on_tick(
+	GtkWidget *widget,
+	GdkFrameClock *frame_clock,
+	gpointer data
+);
+
+static void mrt_load_background(mrt_context_t *ctx);
+static void mrt_load_background_image(const char *filename, mrt_context_t *ctx);
+static void mrt_load_background_video(const char *filename, mrt_context_t *ctx);
 
 static gchar *mrt_find_shell(const mrt_context_t *ctx);
 static gchar *mrt_find_link(const mrt_context_t *ctx, GdkEvent *event);
@@ -340,7 +352,7 @@ gboolean mrt_init(mrt_context_t *ctx)
 		}
 	}
 
-	mrt_load_background_image(ctx);
+	mrt_load_background(ctx);
 
 	g_signal_connect(G_OBJECT(ctx->term), "bell", G_CALLBACK(mrt_on_bell), ctx);
 	g_signal_connect(G_OBJECT(ctx->term), "child-exited", G_CALLBACK(mrt_on_child_exited), ctx);
@@ -368,13 +380,30 @@ gboolean mrt_init(mrt_context_t *ctx)
 
 void mrt_shutdown(mrt_context_t *ctx)
 {
-	g_free(ctx->link);
-	ctx->link = NULL;
+	ctx->background_video_decode_timer_id = 0;
+
+	if(ctx->plm != NULL)
+	{
+		plm_destroy(ctx->plm);
+		ctx->plm = NULL;
+	}
+
+	if(ctx->background_video_buffer != NULL)
+	{
+		g_free(ctx->background_video_buffer);
+		ctx->background_video_buffer = NULL;
+	}
 
 	if(ctx->background_image_surface != NULL)
 	{
 		cairo_surface_destroy(ctx->background_image_surface);
 		ctx->background_image_surface = NULL;
+	}
+
+	if(ctx->link != NULL)
+	{
+		g_free(ctx->link);
+		ctx->link = NULL;
 	}
 }
 
@@ -473,27 +502,164 @@ static void mrt_toggle_scrollbar(mrt_context_t *ctx)
 		gtk_widget_hide(ctx->scrollbar);
 }
 
-static void mrt_load_background_image(mrt_context_t *ctx)
+static void mrt_background_video_on_decode(plm_t *plm, plm_frame_t *frame, void *data)
 {
+	mrt_context_t *ctx;
 	cairo_surface_t *surface;
-	cairo_status_t status;
+	guchar *pixels;
+	int stride;
 
-	if(ctx->background_image == NULL)
+	MRT_UNUSED(plm);
+
+	ctx = (mrt_context_t *) data;
+	surface = ctx->background_image_surface;
+
+	cairo_surface_flush(surface);
+
+	pixels = cairo_image_surface_get_data(surface);
+	stride = cairo_image_surface_get_stride(surface);
+
+	plm_frame_to_bgra(frame, pixels, stride);
+
+	cairo_surface_mark_dirty(surface);
+
+	gtk_widget_queue_draw(ctx->term);
+}
+
+static gboolean mrt_background_video_decode_timer_on_tick(
+	GtkWidget *widget,
+	GdkFrameClock *frame_clock,
+	gpointer data
+)
+{
+	mrt_context_t *ctx;
+	gint64 frame_time;
+	double dt;
+
+	MRT_UNUSED(widget);
+
+	ctx = (mrt_context_t *) data;
+
+	if(ctx->background_video_decode_timer_id == 0 || !gtk_window_is_active(GTK_WINDOW(ctx->win)))
+		return G_SOURCE_CONTINUE;
+
+	frame_time = gdk_frame_clock_get_frame_time(frame_clock);
+
+	dt = (frame_time - ctx->background_video_decode_start_time) * 0.001;
+
+	ctx->background_video_decode_start_time = frame_time;
+
+	if(dt < MRT_VIDEO_DECODE_MAX_FPS)
+		return G_SOURCE_CONTINUE;
+
+	if(dt > MRT_VIDEO_DECODE_MAX_FPS)
+		dt = MRT_VIDEO_DECODE_MAX_FPS;
+
+	plm_decode(ctx->plm, dt);
+	return G_SOURCE_CONTINUE;
+}
+
+static void mrt_load_background(mrt_context_t *ctx)
+{
+	const char *filename = ctx->background_image;
+
+	if(filename == NULL)
 		return;
 
-	surface = cairo_image_surface_create_from_png(ctx->background_image);
-	status = cairo_surface_status(surface);
-	if(status == CAIRO_STATUS_SUCCESS)
-	{
-		ctx->background_image_surface = surface;
-
-		vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
-		g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
-	}
+	if(g_str_has_suffix(filename, ".mpg"))
+		mrt_load_background_video(filename, ctx);
 	else
+		mrt_load_background_image(filename, ctx);
+}
+
+static void mrt_load_background_video(const char *filename, mrt_context_t *ctx)
+{
+	cairo_status_t status;
+	plm_t *plm;
+	plm_frame_t *frame;
+	int w, h;
+	gsize size = 0;
+	GError *err = NULL;
+
+	if(!g_file_get_contents(filename, (gchar **) &ctx->background_video_buffer, &size, &err))
 	{
-		mrt_log("background image error: '%s'", cairo_status_to_string(status));
+		mrt_print_gerror(err, "failed to load background video");
+		g_clear_error(&err);
+		return;
 	}
+
+	plm = plm_create_with_memory(ctx->background_video_buffer, size, FALSE);
+	if(plm == NULL)
+	{
+		mrt_log("failed to load backround video: '%s'", filename);
+		return;
+	}
+	ctx->plm = plm;
+
+	plm_set_loop(plm, TRUE);
+	plm_set_audio_enabled(plm, FALSE);
+	plm_set_video_decode_callback(plm, mrt_background_video_on_decode, ctx);
+
+	w = plm_get_width(plm);
+	h = plm_get_height(plm);
+
+	if(w <= 0 || h <= 0)
+	{
+		mrt_log("background video load error: invalid dimensions (%dx%d)", w, h);
+		return;
+	}
+
+	frame = plm_decode_video(plm);
+	if(frame == NULL)
+	{
+		mrt_log("background video load error: could not decode first frame");
+		return;
+	}
+
+	ctx->background_image_surface = cairo_image_surface_create(
+		CAIRO_FORMAT_ARGB32,
+		w,
+		h
+	);
+
+	status = cairo_surface_status(ctx->background_image_surface);
+	if(status != CAIRO_STATUS_SUCCESS)
+	{
+		mrt_log("background video load error: '%s'", cairo_status_to_string(status));
+		return;
+	}
+
+	mrt_background_video_on_decode(plm, frame, ctx);
+
+	ctx->background_video_decode_start_time = gdk_frame_clock_get_frame_time(
+		gtk_widget_get_frame_clock(ctx->term)
+	);
+	ctx->background_video_decode_timer_id = gtk_widget_add_tick_callback(
+		ctx->term,
+		mrt_background_video_decode_timer_on_tick,
+		ctx,
+		NULL
+	);
+
+	vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
+	g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
+}
+
+static void mrt_load_background_image(const char *filename, mrt_context_t *ctx)
+{
+	cairo_status_t status;
+
+	ctx->background_image_surface = cairo_image_surface_create_from_png(filename);
+
+	status = cairo_surface_status(ctx->background_image_surface);
+	if(status != CAIRO_STATUS_SUCCESS)
+	{
+		mrt_log("background image load error: '%s'", cairo_status_to_string(status));
+		return;
+	}
+
+	vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
+	g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
 }
 
 static gchar *mrt_find_shell(const mrt_context_t *ctx)

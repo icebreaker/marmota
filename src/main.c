@@ -103,6 +103,10 @@ static bool parse_args(mrt_context_t *ctx, const int argc, const char *argv[])
 		{
 			ctx->background_image_overlay_color.alpha = g_ascii_strtod(argv[++i], NULL);
 		}
+		else if(!strcmp(arg, "-background-auto-scale"))
+		{
+			ctx->allow_background_image_autoscale = true;
+		}
 		else if(!strcmp(arg, "-maximized"))
 		{
 			ctx->maximized = TRUE;

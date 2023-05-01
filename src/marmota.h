@@ -32,6 +32,8 @@
 #endif
 #include <pcre2.h>
 
+#include "pl_mpeg.h"
+
 #ifndef MRT_VERSION
 	#define MRT_VERSION "1.0.6"
 #endif
@@ -62,6 +64,10 @@
 
 #ifndef MRT_FONT_SCALE_MAX
 	#define MRT_FONT_SCALE_MAX 4.0
+#endif
+
+#ifndef MRT_VIDEO_DECODE_MAX_FPS
+	#define MRT_VIDEO_DECODE_MAX_FPS 1.0 / 30.0
 #endif
 
 #ifndef MRT_CONTROL_SHIFT_MASK
@@ -133,6 +139,10 @@ typedef struct
 	GtkWidget *scrollbar;
 	gboolean has_exit_code;
 	gint exit_code;
+	plm_t *plm;
+	guchar *background_video_buffer;
+	guint background_video_decode_timer_id;
+	gint64 background_video_decode_start_time;
 } mrt_context_t;
 
 gboolean mrt_init(mrt_context_t *ctx);
