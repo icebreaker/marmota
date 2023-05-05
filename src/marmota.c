@@ -545,15 +545,15 @@ static gboolean mrt_background_video_decode_timer_on_tick(
 
 	frame_time = gdk_frame_clock_get_frame_time(frame_clock);
 
-	dt = (frame_time - ctx->background_video_decode_start_time) * 0.001;
-
-	ctx->background_video_decode_start_time = frame_time;
+	dt = (frame_time - ctx->background_video_decode_start_time) * 0.000001;
 
 	if(dt < MRT_VIDEO_DECODE_MAX_FPS)
 		return G_SOURCE_CONTINUE;
 
 	if(dt > MRT_VIDEO_DECODE_MAX_FPS)
 		dt = MRT_VIDEO_DECODE_MAX_FPS;
+
+	ctx->background_video_decode_start_time = frame_time;
 
 	plm_decode(ctx->plm, dt);
 	return G_SOURCE_CONTINUE;
