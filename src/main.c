@@ -152,16 +152,18 @@ static void show_help(const char *name, const char *arg)
 		"%s v%s\n\n"
 		"usage: %s [arguments]\n\n"
 		"arguments:\n"
-		"\t-e [arguments]\t- command to execute\n"
-		"\t-hold\t\t- hold window after exit\n"
-		"\t-maximized\t- force window to be maximized\n"
-		"\t-borderless\t- force window to be borderless\n"
-		"\t-fullscreen\t- force window to be fullscreen\n"
-		"\t-background\t- set background image (i.e: 'terminal.png')\n"
-		"\t-f, --font\t- set font (i.e: 'IBM Plex Mono weight=650 19')\n"
-		"\t-i, --icon\t- set icon (i.e: 'launchpad')\n"
-		"\t-h, --help\t- show this help\n"
-		"\t-v, --version\t- display version\n",
+		"\t-e [arguments]\t\t- command to execute\n"
+		"\t-hold\t\t\t- hold window after exit\n"
+		"\t-maximized\t\t- force window to be maximized\n"
+		"\t-borderless\t\t- force window to be borderless\n"
+		"\t-fullscreen\t\t- force window to be fullscreen\n"
+		"\t-background\t\t- set background image (i.e: 'terminal.png')\n"
+		"\t-background-opacity\t- set background image opacity (i.e: 0.8)\n"
+		"\t-background-auto-scale\t- force background image to auto scale\n"
+		"\t-f, --font\t\t- set font (i.e: 'IBM Plex Mono weight=650 19')\n"
+		"\t-i, --icon\t\t- set icon (i.e: 'launchpad')\n"
+		"\t-h, --help\t\t- show this help\n"
+		"\t-v, --version\t\t- display version\n",
 		name,
 		MRT_VERSION,
 		name
