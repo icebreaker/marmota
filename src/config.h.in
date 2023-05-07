@@ -60,6 +60,10 @@
 //
 .allow_font_scale_shortcut = FALSE,
 //
+// Whether or not to allow video seeking via Ctrl+Shift+?, Ctrl+Shift+ < and >.
+//
+.allow_background_video_seek_shortcut = FALSE,
+//
 // Whether or not to allow scaling the background image.
 //
 // If TRUE this will use and apply `background_image_scale`.

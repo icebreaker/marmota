@@ -363,7 +363,8 @@ gboolean mrt_init(mrt_context_t *ctx)
 	allow_shortcut = ctx->allow_fullscreen_toggle_shortcut ||
 		ctx->allow_copy_paste_shortcut ||
 		ctx->allow_hold_escape_shortcut ||
-		ctx->allow_font_scale_shortcut;
+		ctx->allow_font_scale_shortcut ||
+		ctx->allow_background_video_seek_shortcut;
 
 	if(allow_shortcut)
 		g_signal_connect(G_OBJECT(ctx->term), "key-press-event", G_CALLBACK(mrt_on_key_press), ctx);
@@ -533,6 +534,7 @@ static gboolean mrt_background_video_decode_timer_on_tick(
 )
 {
 	mrt_context_t *ctx;
+	gint seek_to;
 	gint64 frame_time;
 	double dt;
 
@@ -555,7 +557,17 @@ static gboolean mrt_background_video_decode_timer_on_tick(
 
 	ctx->background_video_decode_start_time = frame_time;
 
-	plm_decode(ctx->plm, dt);
+	seek_to = ctx->background_video_decode_seek_to;
+	if(seek_to != -1)
+	{
+		plm_seek(ctx->plm, seek_to, FALSE);
+		ctx->background_video_decode_seek_to = -1;
+	}
+	else
+	{
+		plm_decode(ctx->plm, dt);
+	}
+
 	return G_SOURCE_CONTINUE;
 }
 
@@ -749,7 +761,10 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 		}
 	}
 
-	if(ctx->allow_copy_paste_shortcut && ((kevent->state & MRT_CONTROL_SHIFT_MASK) == MRT_CONTROL_SHIFT_MASK))
+	if((kevent->state & MRT_CONTROL_SHIFT_MASK) != MRT_CONTROL_SHIFT_MASK)
+		return FALSE;
+
+	if(ctx->allow_copy_paste_shortcut)
 	{
 		switch(kevent->keyval)
 		{
@@ -763,7 +778,25 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 		}
 	}
 
-	if(ctx->allow_font_scale_shortcut && ((kevent->state & MRT_CONTROL_SHIFT_MASK) == MRT_CONTROL_SHIFT_MASK))
+	if(ctx->allow_background_video_seek_shortcut && ctx->background_video_decode_timer_id != 0)
+	{
+		switch(kevent->keyval)
+		{
+			case GDK_KEY_less:
+				ctx->background_video_decode_seek_to = plm_get_time(ctx->plm) - MRT_VIDEO_SEEK_TO_AMOUNT;
+				return TRUE;
+
+			case GDK_KEY_greater:
+				ctx->background_video_decode_seek_to = plm_get_time(ctx->plm) + MRT_VIDEO_SEEK_TO_AMOUNT;
+				return TRUE;
+
+			case GDK_KEY_question:
+				ctx->background_video_decode_seek_to = 0;
+				return TRUE;
+		}
+	}
+
+	if(ctx->allow_font_scale_shortcut)
 	{
 		switch(kevent->keyval)
 		{

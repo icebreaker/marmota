@@ -70,6 +70,10 @@
 	#define MRT_VIDEO_DECODE_MAX_FPS 1.0 / 30.0
 #endif
 
+#ifndef MRT_VIDEO_SEEK_TO_AMOUNT
+	#define MRT_VIDEO_SEEK_TO_AMOUNT 3
+#endif
+
 #ifndef MRT_CONTROL_SHIFT_MASK
 	#define MRT_CONTROL_SHIFT_MASK (GDK_CONTROL_MASK | GDK_SHIFT_MASK)
 #endif
@@ -100,6 +104,7 @@ typedef struct
 	gboolean allow_copy_paste_shortcut;
 	gboolean allow_hold_escape_shortcut;
 	gboolean allow_font_scale_shortcut;
+	gboolean allow_background_video_seek_shortcut;
 	gboolean allow_background_image_scale;
 	gboolean allow_background_image_autoscale;
 	gdouble font_scale;
@@ -143,6 +148,7 @@ typedef struct
 	guchar *background_video_buffer;
 	guint background_video_decode_timer_id;
 	gint64 background_video_decode_start_time;
+	gint background_video_decode_seek_to;
 } mrt_context_t;
 
 gboolean mrt_init(mrt_context_t *ctx);
