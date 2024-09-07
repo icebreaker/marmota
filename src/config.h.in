@@ -9,7 +9,7 @@
 //
 // If NULL, the default window icon is used.
 //
-.icon_name = "utilities-terminal",
+.icon_name = "terminal",
 //
 // Sets default window title.
 //
