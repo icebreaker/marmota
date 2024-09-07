@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Marmota
+Exec=marmota
+Icon=terminal
+Terminal=false
+Type=Application
+Categories=Utility;Application;
