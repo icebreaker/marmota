@@ -35,7 +35,7 @@
 #include "pl_mpeg.h"
 
 #ifndef MRT_VERSION
-	#define MRT_VERSION "1.0.9"
+	#define MRT_VERSION "1.1.0"
 #endif
 
 #ifndef MRT_UNUSED
