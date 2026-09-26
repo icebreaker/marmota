@@ -869,7 +869,14 @@ static void mrt_on_window_destroy(GtkWidget *widget, gpointer data)
 static void mrt_on_window_title_changed(VteTerminal *term, gpointer data)
 {
 	mrt_context_t *ctx = (mrt_context_t *) data;
+
+#if VTE_CHECK_VERSION(0, 78, 0)
+	const gchar *title = vte_terminal_get_termprop_string(term, VTE_TERMPROP_XTERM_TITLE, NULL);
+#else
+	G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 	const gchar *title = vte_terminal_get_window_title(term);
+	G_GNUC_END_IGNORE_DEPRECATIONS
+#endif
 
 	if(MRT_ISSET(title))
 		gtk_window_set_title(GTK_WINDOW(ctx->win), title);
