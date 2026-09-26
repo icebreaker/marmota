@@ -59,6 +59,7 @@ static gboolean mrt_background_video_decode_timer_on_tick(
 static void mrt_load_background(mrt_context_t *ctx);
 static void mrt_load_background_image(const char *filename, mrt_context_t *ctx);
 static void mrt_load_background_video(const char *filename, mrt_context_t *ctx);
+static void mrt_toggle_background_image(mrt_context_t *ctx);
 
 static gchar *mrt_find_shell(const mrt_context_t *ctx);
 static gchar *mrt_find_link(const mrt_context_t *ctx, GdkEvent *event);
@@ -583,6 +584,8 @@ static void mrt_load_background(mrt_context_t *ctx)
 		mrt_load_background_video(filename, ctx);
 	else
 		mrt_load_background_image(filename, ctx);
+
+	mrt_toggle_background_image(ctx);
 }
 
 static void mrt_load_background_video(const char *filename, mrt_context_t *ctx)
@@ -619,6 +622,8 @@ static void mrt_load_background_video(const char *filename, mrt_context_t *ctx)
 	if(w <= 0 || h <= 0)
 	{
 		mrt_log("background video load error: invalid dimensions (%dx%d)", w, h);
+		plm_destroy(ctx->plm);
+		ctx->plm = NULL;
 		return;
 	}
 
@@ -626,6 +631,8 @@ static void mrt_load_background_video(const char *filename, mrt_context_t *ctx)
 	if(frame == NULL)
 	{
 		mrt_log("background video load error: could not decode first frame");
+		plm_destroy(ctx->plm);
+		ctx->plm = NULL;
 		return;
 	}
 
@@ -639,6 +646,12 @@ static void mrt_load_background_video(const char *filename, mrt_context_t *ctx)
 	if(status != CAIRO_STATUS_SUCCESS)
 	{
 		mrt_log("background video load error: '%s'", cairo_status_to_string(status));
+
+		cairo_surface_destroy(ctx->background_image_surface);
+		ctx->background_image_surface = NULL;
+
+		plm_destroy(ctx->plm);
+		ctx->plm = NULL;
 		return;
 	}
 
@@ -647,15 +660,6 @@ static void mrt_load_background_video(const char *filename, mrt_context_t *ctx)
 	ctx->background_video_decode_start_time = gdk_frame_clock_get_frame_time(
 		gtk_widget_get_frame_clock(ctx->term)
 	);
-	ctx->background_video_decode_timer_id = gtk_widget_add_tick_callback(
-		ctx->term,
-		mrt_background_video_decode_timer_on_tick,
-		ctx,
-		NULL
-	);
-
-	vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
-	g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
 }
 
 static void mrt_load_background_image(const char *filename, mrt_context_t *ctx)
@@ -668,11 +672,52 @@ static void mrt_load_background_image(const char *filename, mrt_context_t *ctx)
 	if(status != CAIRO_STATUS_SUCCESS)
 	{
 		mrt_log("background image load error: '%s'", cairo_status_to_string(status));
+		cairo_surface_destroy(ctx->background_image_surface);
+		ctx->background_image_surface = NULL;
 		return;
 	}
+}
 
-	vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
-	g_signal_connect(G_OBJECT(ctx->term), "draw", G_CALLBACK(mrt_on_draw), ctx);
+static void mrt_toggle_background_image(mrt_context_t *ctx)
+{
+	if(ctx->background_image_surface == NULL)
+		return;
+
+	if(ctx->plm != NULL)
+	{
+		if(ctx->background_video_decode_timer_id != 0)
+		{
+			gtk_widget_remove_tick_callback(ctx->term, ctx->background_video_decode_timer_id);
+			ctx->background_video_decode_timer_id = 0;
+		}
+		else
+		{
+			ctx->background_video_decode_timer_id = gtk_widget_add_tick_callback(
+				ctx->term,
+				mrt_background_video_decode_timer_on_tick,
+				ctx,
+				NULL
+			);
+		}
+	}
+
+	if(ctx->background_image_draw_signal_handler_id != 0 &&
+		g_signal_handler_is_connected(G_OBJECT(ctx->term), ctx->background_image_draw_signal_handler_id))
+	{
+		vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), TRUE);
+		g_signal_handler_disconnect(G_OBJECT(ctx->term), ctx->background_image_draw_signal_handler_id);
+		ctx->background_image_draw_signal_handler_id = 0;
+	}
+	else
+	{
+		vte_terminal_set_clear_background(VTE_TERMINAL(ctx->term), FALSE);
+		ctx->background_image_draw_signal_handler_id = g_signal_connect(
+			G_OBJECT(ctx->term),
+			"draw",
+			G_CALLBACK(mrt_on_draw),
+			ctx
+		);
+	}
 }
 
 static gchar *mrt_find_shell(const mrt_context_t *ctx)
@@ -793,6 +838,16 @@ static gboolean mrt_on_key_press(GtkWidget *widget, GdkEvent *event, gpointer da
 
 			case GDK_KEY_question:
 				ctx->background_video_decode_seek_to = 0;
+				return TRUE;
+		}
+	}
+
+	if(ctx->allow_background_image_toggle_shortcut && ctx->background_image_surface != NULL)
+	{
+		switch(kevent->keyval)
+		{
+			case GDK_KEY_bar:
+				mrt_toggle_background_image(ctx);
 				return TRUE;
 		}
 	}

@@ -64,6 +64,10 @@
 //
 .allow_background_video_seek_shortcut = FALSE,
 //
+// Whether or not to allow toggling the background image via Ctrl+Shift+\.
+//
+.allow_background_image_toggle_shortcut = FALSE,
+//
 // Whether or not to allow scaling the background image.
 //
 // If TRUE this will use and apply `background_image_scale`.

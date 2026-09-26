@@ -105,6 +105,7 @@ typedef struct
 	gboolean allow_hold_escape_shortcut;
 	gboolean allow_font_scale_shortcut;
 	gboolean allow_background_video_seek_shortcut;
+	gboolean allow_background_image_toggle_shortcut;
 	gboolean allow_background_image_scale;
 	gboolean allow_background_image_autoscale;
 	gdouble font_scale;
@@ -137,6 +138,7 @@ typedef struct
 	const gchar **spawn_argv;
 	gchar *link;
 	cairo_surface_t *background_image_surface;
+	gulong background_image_draw_signal_handler_id;
 	GtkWidget *term;
 	GtkWidget *win;
 	GtkWidget *context_menu;
