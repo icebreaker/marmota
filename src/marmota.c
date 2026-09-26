@@ -415,6 +415,7 @@ gboolean mrt_spawn(mrt_context_t *ctx)
 	GSpawnFlags flags;
 
 	ctx->exit_code = 0;
+	ctx->has_exit_code = FALSE;
 
 	if(ctx->spawn_argv != NULL)
 	{
@@ -857,7 +858,10 @@ static void mrt_on_window_destroy(GtkWidget *widget, gpointer data)
 	MRT_UNUSED(widget);
 
 	if(!ctx->has_exit_code)
+	{
 		ctx->exit_code = EXIT_FAILURE;
+		ctx->has_exit_code = TRUE;
+	}
 
 	gtk_main_quit();
 }
@@ -940,8 +944,11 @@ static void mrt_on_child_exited(VteTerminal *term, gint exit_code, gpointer data
 
 	MRT_UNUSED(term);
 
-	ctx->has_exit_code = TRUE;
-	ctx->exit_code = exit_code;
+	if(!ctx->has_exit_code)
+	{
+		ctx->exit_code = exit_code;
+		ctx->has_exit_code = TRUE;
+	}
 
 	if(ctx->hold)
 		return;
@@ -1006,9 +1013,14 @@ static void mrt_context_menu_on_scrollbar(GtkWidget *widget, gpointer data)
 
 static void mrt_context_menu_on_close(GtkWidget *widget, gpointer data)
 {
+	mrt_context_t *ctx = (mrt_context_t *) data;
+
 	MRT_UNUSED(widget);
 
-	mrt_quit((mrt_context_t *) data);
+	ctx->exit_code = 0;
+	ctx->has_exit_code = TRUE;
+
+	mrt_quit(ctx);
 }
 
 static void mrt_context_menu_on_zoom_in(GtkWidget *widget, gpointer data)
